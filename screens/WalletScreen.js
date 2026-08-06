@@ -3,7 +3,6 @@ import {
   ScrollView,
   View,
   Text,
-  Pressable,
   StyleSheet,
   Image,
   SafeAreaView,
@@ -14,6 +13,8 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { LogOut, CreditCard, TrendingUp, Landmark } from "lucide-react-native";
+import FadeInUp from "../components/FadeInUp";
+import PressScale from "../components/PressScale";
 import { colors, radius, shadow } from "../data/theme";
 import { user, accounts, otherAccounts, cards, getTotalBalance } from "../data/accounts";
 import { useSession } from "../context/SessionContext";
@@ -44,106 +45,128 @@ export default function WalletScreen() {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Top bar */}
-        <View style={styles.topBar}>
-          <View style={styles.profilePill}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials}</Text>
+        <FadeInUp delay={0} duration={400}>
+          <View style={styles.topBar}>
+            <View style={styles.profilePill}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials}</Text>
+              </View>
+              <Text style={styles.userName}>{user.name}</Text>
             </View>
-            <Text style={styles.userName}>{user.name}</Text>
+            <PressScale onPress={signOut} style={styles.signOutBtn} scaleTo={0.88} hitSlop={10}>
+              <LogOut size={18} color={colors.navy} />
+            </PressScale>
           </View>
-          <Pressable onPress={signOut} style={styles.signOutBtn} hitSlop={10}>
-            <LogOut size={18} color={colors.navy} />
-          </Pressable>
-        </View>
+        </FadeInUp>
 
-        <View style={styles.balanceBlock}>
-          <Text style={styles.balanceLabel}>Total Balance Across All Accounts</Text>
-          <Text style={styles.balanceValue}>{money(total)}</Text>
-        </View>
+        <FadeInUp delay={80}>
+          <View style={styles.balanceBlock}>
+            <Text style={styles.balanceLabel}>Total Balance Across All Accounts</Text>
+            <Text style={styles.balanceValue}>{money(total)}</Text>
+          </View>
+        </FadeInUp>
 
         {/* Card stack */}
-        <View style={styles.stackWrap}>
-          {/* front card */}
-          <Pressable
-            onPress={() => {
-              setActiveCard((c) => (c + 1) % 3);
-              showDemo("Card details — demo mode");
-            }}
-            style={({ pressed }) => [styles.frontCardWrap, pressed && { transform: [{ scale: 0.98 }] }]}
-          >
-            <Image
-              source={require("../assets/sallar_top_card.png")}
-              style={styles.frontCardImg}
-              resizeMode="contain"
-            />
-          </Pressable>
-        </View>
+        <FadeInUp delay={160} duration={550} distance={14} fromScale={0.94}>
+          <View style={styles.stackWrap}>
+            <PressScale
+              onPress={() => {
+                setActiveCard((c) => (c + 1) % 3);
+                showDemo("Card details — demo mode");
+              }}
+              scaleTo={0.97}
+              style={styles.frontCardWrap}
+            >
+              <Image
+                source={require("../assets/sallar_top_card.png")}
+                style={styles.frontCardImg}
+                resizeMode="contain"
+              />
+            </PressScale>
+          </View>
+        </FadeInUp>
 
         {/* Accounts */}
-        <SectionHeader title="Your Accounts" />
-        <GlassCard>
-          <AccountRow
-            title={accounts[0].name}
-            sub={`Acct ${accounts[0].accountNumber}`}
-            available={accounts[0].availableBalance}
-            total={accounts[0].totalBalance}
-            linked={accounts[0].linkedCard}
-          />
-        </GlassCard>
-        <GlassCard>
-          <AccountRow
-            title={accounts[1].name}
-            sub={`Acct ${accounts[1].accountNumber}`}
-            total={accounts[1].totalBalance}
-            linked={accounts[1].linkedCard || "N/A"}
-          />
-        </GlassCard>
+        <FadeInUp delay={260}>
+          <SectionHeader title="Your Accounts" />
+        </FadeInUp>
+        <FadeInUp delay={320}>
+          <GlassCard>
+            <AccountRow
+              title={accounts[0].name}
+              sub={`Acct ${accounts[0].accountNumber}`}
+              available={accounts[0].availableBalance}
+              total={accounts[0].totalBalance}
+              linked={accounts[0].linkedCard}
+            />
+          </GlassCard>
+        </FadeInUp>
+        <FadeInUp delay={380}>
+          <GlassCard>
+            <AccountRow
+              title={accounts[1].name}
+              sub={`Acct ${accounts[1].accountNumber}`}
+              total={accounts[1].totalBalance}
+              linked={accounts[1].linkedCard || "N/A"}
+            />
+          </GlassCard>
+        </FadeInUp>
 
         {/* Other banking accounts */}
-        <SectionHeader title="Other Banking Accounts" />
-        <View style={styles.linkedCard}>
-          <View style={styles.linkedRow}>
-            <View style={styles.linkedIconWrap}>
-              <TrendingUp size={18} color={colors.gray} />
+        <FadeInUp delay={440}>
+          <SectionHeader title="Other Banking Accounts" />
+        </FadeInUp>
+        <FadeInUp delay={480}>
+          <View style={styles.linkedCard}>
+            <View style={styles.linkedRow}>
+              <View style={styles.linkedIconWrap}>
+                <TrendingUp size={18} color={colors.gray} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.linkedTitle}>{otherAccounts[0].name}</Text>
+                <Text style={styles.linkedSub}>Acct {otherAccounts[0].accountNumber} · Linked</Text>
+              </View>
+              <Text style={styles.linkedBalance}>{money(otherAccounts[0].totalBalance)}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.linkedTitle}>{otherAccounts[0].name}</Text>
-              <Text style={styles.linkedSub}>Acct {otherAccounts[0].accountNumber} · Linked</Text>
-            </View>
-            <Text style={styles.linkedBalance}>{money(otherAccounts[0].totalBalance)}</Text>
           </View>
-        </View>
+        </FadeInUp>
 
         {/* Cards */}
-        <SectionHeader title="Cards" />
-        {cards.map((c) => (
-          <Pressable
-            key={c.id}
-            onPress={() => showDemo(`${c.network} — demo mode`)}
-            style={({ pressed }) => [styles.cardChip, pressed && { opacity: 0.8 }]}
-          >
-            <View
-              style={[
-                styles.cardChipIcon,
-                { backgroundColor: c.type === "credit" ? colors.navy : colors.blue },
-              ]}
+        <FadeInUp delay={540}>
+          <SectionHeader title="Cards" />
+        </FadeInUp>
+        {cards.map((c, i) => (
+          <FadeInUp key={c.id} delay={580 + i * 60}>
+            <PressScale
+              onPress={() => showDemo(`${c.network} — demo mode`)}
+              scaleTo={0.97}
+              style={styles.cardChip}
             >
-              <CreditCard size={16} color={colors.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardChipLabel}>{c.label}</Text>
-              <Text style={styles.cardChipNetwork}>{c.network}</Text>
-            </View>
-            <Text style={styles.cardChipLast4}>••{c.last4}</Text>
-          </Pressable>
+              <View
+                style={[
+                  styles.cardChipIcon,
+                  { backgroundColor: c.type === "credit" ? colors.navy : colors.blue },
+                ]}
+              >
+                <CreditCard size={16} color={colors.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardChipLabel}>{c.label}</Text>
+                <Text style={styles.cardChipNetwork}>{c.network}</Text>
+              </View>
+              <Text style={styles.cardChipLast4}>••{c.last4}</Text>
+            </PressScale>
+          </FadeInUp>
         ))}
 
         {/* Footer */}
-        <View style={styles.footerBanner}>
-          <Landmark size={16} color={colors.white} />
-          <Text style={styles.footerBannerText}>Owned and Operated By Tamato.Design</Text>
-        </View>
-        <Text style={styles.legal}>© Sallar Financial Inc. All rights reserved.</Text>
+        <FadeInUp delay={720}>
+          <View style={styles.footerBanner}>
+            <Landmark size={16} color={colors.white} />
+            <Text style={styles.footerBannerText}>Owned and Operated By Tamato.Design</Text>
+          </View>
+          <Text style={styles.legal}>© Sallar Financial Inc. All rights reserved.</Text>
+        </FadeInUp>
       </ScrollView>
     </SafeAreaView>
   );

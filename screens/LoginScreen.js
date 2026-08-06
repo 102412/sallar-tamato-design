@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  Pressable,
+  Animated,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Logo from "../components/Logo";
+import FadeInUp from "../components/FadeInUp";
+import PressScale from "../components/PressScale";
 import { colors, radius, shadow } from "../data/theme";
 import { user } from "../data/accounts";
 import { useSession } from "../context/SessionContext";
@@ -23,6 +25,18 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const shake = useRef(new Animated.Value(0)).current;
+
+  const runShake = () => {
+    shake.setValue(0);
+    Animated.sequence([
+      Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 60, useNativeDriver: true }),
+    ]).start();
+  };
 
   const handleLogin = async () => {
     if (
@@ -33,6 +47,7 @@ export default function LoginScreen({ navigation }) {
       await signIn();
     } else {
       setError("Incorrect email or password. Please try again.");
+      runShake();
     }
   };
 
@@ -43,50 +58,67 @@ export default function LoginScreen({ navigation }) {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.center}
         >
-          <View style={styles.logoWrap}>
-            <Logo size={30} color={colors.white} accent={colors.gold} />
-          </View>
+          <FadeInUp delay={0} duration={450}>
+            <View style={styles.logoWrap}>
+              <Logo size={30} color={colors.white} accent={colors.gold} />
+            </View>
+          </FadeInUp>
 
-          <View style={styles.card}>
-            <Text style={styles.title}>Welcome back</Text>
-            <Text style={styles.subtitle}>Log in to access your accounts</Text>
-
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="you@example.com"
-              placeholderTextColor={colors.gray}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={colors.gray}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-
-            <Pressable
-              onPress={handleLogin}
-              style={({ pressed }) => [styles.loginBtn, pressed && { opacity: 0.85 }]}
+          <FadeInUp delay={100} duration={450} distance={26}>
+            <Animated.View
+              style={[
+                styles.card,
+                {
+                  transform: [
+                    {
+                      translateX: shake.interpolate({
+                        inputRange: [-1, 1],
+                        outputRange: [-8, 8],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <Text style={styles.loginBtnText}>Log In</Text>
-            </Pressable>
+              <Text style={styles.title}>Welcome back</Text>
+              <Text style={styles.subtitle}>Log in to access your accounts</Text>
 
-            <Text style={styles.forgot}>Forgot password?</Text>
-          </View>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                placeholderTextColor={colors.gray}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+              />
 
-          <Pressable onPress={() => navigation.goBack()} hitSlop={10}>
-            <Text style={styles.backLink}>← Back to home</Text>
-          </Pressable>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor={colors.gray}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+
+              <PressScale onPress={handleLogin} style={styles.loginBtn}>
+                <Text style={styles.loginBtnText}>Log In</Text>
+              </PressScale>
+
+              <Text style={styles.forgot}>Forgot password?</Text>
+            </Animated.View>
+          </FadeInUp>
+
+          <FadeInUp delay={200}>
+            <PressScale onPress={() => navigation.goBack()} scaleTo={0.94} hitSlop={10}>
+              <Text style={styles.backLink}>← Back to home</Text>
+            </PressScale>
+          </FadeInUp>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>

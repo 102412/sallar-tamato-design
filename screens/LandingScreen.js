@@ -3,13 +3,14 @@ import {
   ScrollView,
   View,
   Text,
-  Pressable,
   StyleSheet,
   SafeAreaView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ShieldCheck, Zap, SlidersHorizontal, HeartHandshake } from "lucide-react-native";
 import Logo from "../components/Logo";
+import FadeInUp from "../components/FadeInUp";
+import PressScale from "../components/PressScale";
 import { colors, radius, shadow } from "../data/theme";
 
 const FEATURES = [
@@ -35,87 +36,100 @@ export default function LandingScreen({ navigation }) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Top nav */}
-        <View style={styles.nav}>
-          <Logo size={22} />
-          <Pressable
-            onPress={() => navigation.navigate("Login")}
-            style={styles.ghostBtn}
-          >
-            <Text style={styles.ghostBtnText}>Log In</Text>
-          </Pressable>
-        </View>
+        <FadeInUp delay={0} duration={400}>
+          <View style={styles.nav}>
+            <Logo size={22} />
+            <PressScale onPress={() => navigation.navigate("Login")} style={styles.ghostBtn}>
+              <Text style={styles.ghostBtnText}>Log In</Text>
+            </PressScale>
+          </View>
+        </FadeInUp>
 
         {/* Hero */}
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>Banking that moves with you</Text>
-          <Text style={styles.heroSubhead}>
-            One place for your accounts, cards, and cash flow — designed to feel effortless.
-          </Text>
-          <Pressable
-            onPress={() => navigation.navigate("Login")}
-            style={({ pressed }) => [styles.ctaBtn, pressed && { opacity: 0.85 }]}
-          >
-            <Text style={styles.ctaBtnText}>Get Started</Text>
-          </Pressable>
+          <FadeInUp delay={80}>
+            <Text style={styles.heroTitle}>Banking that moves with you</Text>
+          </FadeInUp>
+          <FadeInUp delay={160}>
+            <Text style={styles.heroSubhead}>
+              One place for your accounts, cards, and cash flow — designed to feel effortless.
+            </Text>
+          </FadeInUp>
+          <FadeInUp delay={240}>
+            <PressScale
+              onPress={() => navigation.navigate("Login")}
+              style={styles.ctaBtn}
+            >
+              <Text style={styles.ctaBtnText}>Get Started</Text>
+            </PressScale>
+          </FadeInUp>
         </View>
 
         {/* Trust strip */}
-        <View style={styles.trustStrip}>
-          {[
-            { icon: ShieldCheck, label: "Bank-Grade Encryption" },
-            { icon: HeartHandshake, label: "24/7 Support" },
-            { icon: ShieldCheck, label: "Member Protection*" },
-          ].map((t, i) => (
-            <View key={i} style={styles.trustItem}>
-              <t.icon size={18} color={colors.blue} />
-              <Text style={styles.trustLabel}>{t.label}</Text>
-            </View>
-          ))}
-        </View>
+        <FadeInUp delay={320}>
+          <View style={styles.trustStrip}>
+            {[
+              { icon: ShieldCheck, label: "Bank-Grade Encryption" },
+              { icon: HeartHandshake, label: "24/7 Support" },
+              { icon: ShieldCheck, label: "Member Protection*" },
+            ].map((t, i) => (
+              <View key={i} style={styles.trustItem}>
+                <t.icon size={18} color={colors.blue} />
+                <Text style={styles.trustLabel}>{t.label}</Text>
+              </View>
+            ))}
+          </View>
+        </FadeInUp>
 
         {/* Feature blocks */}
         <View style={styles.features}>
           {FEATURES.map((f, i) => (
-            <View key={i} style={styles.featureCard}>
-              <View style={styles.featureIconWrap}>
-                <f.icon size={22} color={colors.blue} />
+            <FadeInUp key={i} delay={400 + i * 100}>
+              <View style={styles.featureCard}>
+                <View style={styles.featureIconWrap}>
+                  <f.icon size={22} color={colors.blue} />
+                </View>
+                <Text style={styles.featureTitle}>{f.title}</Text>
+                <Text style={styles.featureDesc}>{f.desc}</Text>
               </View>
-              <Text style={styles.featureTitle}>{f.title}</Text>
-              <Text style={styles.featureDesc}>{f.desc}</Text>
-            </View>
+            </FadeInUp>
           ))}
         </View>
 
         {/* Final CTA banner */}
-        <LinearGradient
-          colors={[colors.navy, colors.blue]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.bannerCard}
-        >
-          <Text style={styles.bannerTitle}>Ready to get started?</Text>
-          <Text style={styles.bannerSubhead}>Join Sallar in minutes.</Text>
-          <Pressable
-            onPress={() => navigation.navigate("Login")}
-            style={({ pressed }) => [styles.bannerBtn, pressed && { opacity: 0.85 }]}
+        <FadeInUp delay={700}>
+          <LinearGradient
+            colors={[colors.navy, colors.blue]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.bannerCard}
           >
-            <Text style={styles.bannerBtnText}>Get Started</Text>
-          </Pressable>
-        </LinearGradient>
+            <Text style={styles.bannerTitle}>Ready to get started?</Text>
+            <Text style={styles.bannerSubhead}>Join Sallar in minutes.</Text>
+            <PressScale
+              onPress={() => navigation.navigate("Login")}
+              style={styles.bannerBtn}
+            >
+              <Text style={styles.bannerBtnText}>Get Started</Text>
+            </PressScale>
+          </LinearGradient>
+        </FadeInUp>
 
         {/* Footer */}
-        <View style={styles.footer}>
-          <Logo size={16} />
-          <View style={styles.footerLinks}>
-            <Text style={styles.footerLink}>Privacy</Text>
-            <Text style={styles.footerLink}>Terms</Text>
-            <Text style={styles.footerLink}>Contact</Text>
+        <FadeInUp delay={780}>
+          <View style={styles.footer}>
+            <Logo size={16} />
+            <View style={styles.footerLinks}>
+              <Text style={styles.footerLink}>Privacy</Text>
+              <Text style={styles.footerLink}>Terms</Text>
+              <Text style={styles.footerLink}>Contact</Text>
+            </View>
+            <Text style={styles.disclosure}>
+              This is a non-functional design/demo project — not a real bank or financial
+              institution. * fictional, illustrative only.
+            </Text>
           </View>
-          <Text style={styles.disclosure}>
-            This is a non-functional design/demo project — not a real bank or financial
-            institution. * fictional, illustrative only.
-          </Text>
-        </View>
+        </FadeInUp>
       </ScrollView>
     </SafeAreaView>
   );
