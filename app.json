@@ -21,6 +21,9 @@
     "web": {
       "favicon": "./assets/sallar_icon.png"
     },
+    "experiments": {
+      "baseUrl": "/sallarinc"
+    },
     "plugins": []
   }
 }
