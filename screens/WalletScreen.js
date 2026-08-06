@@ -63,16 +63,6 @@ export default function WalletScreen() {
 
         {/* Card stack */}
         <View style={styles.stackWrap}>
-          {/* back card - blue */}
-          <LinearGradient
-            colors={["#2C4EA8", "#16295C"]}
-            style={[styles.backCard, { top: 0, transform: [{ rotate: "-6deg" }] }]}
-          />
-          {/* middle card - neutral */}
-          <LinearGradient
-            colors={["#C7CDDA", "#8A94A6"]}
-            style={[styles.backCard, { top: 6, transform: [{ rotate: "5deg" }] }]}
-          />
           {/* front card */}
           <Pressable
             onPress={() => {
@@ -244,23 +234,12 @@ const styles = StyleSheet.create({
   balanceLabel: { fontSize: 12.5, fontWeight: "700", color: colors.gray, letterSpacing: 0.3 },
   balanceValue: { fontSize: 38, fontWeight: "900", color: colors.navy, marginTop: 4 },
 
-  stackWrap: { height: 220, marginTop: 28, marginHorizontal: 8 },
-  backCard: {
-    position: "absolute",
-    left: 20,
-    right: 20,
-    height: 170,
-    borderRadius: radius.lg,
-    ...shadow.soft,
-  },
+  stackWrap: { height: 260, marginTop: 28, alignItems: "center", justifyContent: "center" },
   frontCardWrap: {
-    position: "absolute",
-    top: 30,
-    left: 0,
-    right: 0,
+    width: "100%",
     ...shadow.card,
   },
-  frontCardImg: { width: "100%", height: 190, borderRadius: radius.lg },
+  frontCardImg: { width: "100%", height: 260, borderRadius: radius.lg },
 
   sectionHeader: {
     fontSize: 15,
