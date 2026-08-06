@@ -234,12 +234,11 @@ const styles = StyleSheet.create({
   balanceLabel: { fontSize: 12.5, fontWeight: "700", color: colors.gray, letterSpacing: 0.3 },
   balanceValue: { fontSize: 38, fontWeight: "900", color: colors.navy, marginTop: 4 },
 
-  stackWrap: { height: 260, marginTop: 28, alignItems: "center", justifyContent: "center" },
+  stackWrap: { height: 360, marginTop: 28, marginHorizontal: -8, alignItems: "center", justifyContent: "center" },
   frontCardWrap: {
-    width: "100%",
-    ...shadow.card,
+    width: "112%",
   },
-  frontCardImg: { width: "100%", height: 260, borderRadius: radius.lg },
+  frontCardImg: { width: "100%", height: 360 },
 
   sectionHeader: {
     fontSize: 15,
