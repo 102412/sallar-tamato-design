@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Sallar Financial",
+    "slug": "sallar-financial",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/sallar_icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "sallarfinancial",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "design.tamato.sallarfinancial"
+    },
+    "android": {
+      "package": "design.tamato.sallarfinancial",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/sallar_icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "web": {
+      "favicon": "./assets/sallar_icon.png"
+    },
+    "plugins": []
+  }
+}
