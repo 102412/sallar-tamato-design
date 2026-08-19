@@ -10,6 +10,7 @@ import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import LandingScreen from "./screens/LandingScreen";
 import LoginScreen from "./screens/LoginScreen";
 import WalletScreen from "./screens/WalletScreen";
+import CardPayScreen from "./screens/CardPayScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -43,7 +44,14 @@ function RootNavigator() {
       <NavigationContainer theme={navTheme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {loggedIn ? (
-            <Stack.Screen name="Wallet" component={WalletScreen} />
+            <>
+              <Stack.Screen name="Wallet" component={WalletScreen} />
+              <Stack.Screen
+                name="CardPay"
+                component={CardPayScreen}
+                options={{ animation: "slide_from_right" }}
+              />
+            </>
           ) : (
             <>
               <Stack.Screen name="Landing" component={LandingScreen} />

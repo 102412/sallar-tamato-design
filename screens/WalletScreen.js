@@ -41,12 +41,18 @@ function showDemo(msg = "Demo mode — not a real action") {
   }
 }
 
-export default function WalletScreen() {
+const DEFAULT_CARD_ID = "amex-platinum";
+const DEFAULT_CARD_INDEX = Math.max(
+  0,
+  carouselCards.findIndex((c) => c.id === DEFAULT_CARD_ID)
+);
+
+export default function WalletScreen({ navigation }) {
   const { signOut } = useSession();
   const { colors, shadow } = useTheme();
   const styles = useMemo(() => makeStyles(colors, shadow), [colors, shadow]);
   const total = getTotalBalance();
-  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [activeCardIndex, setActiveCardIndex] = useState(DEFAULT_CARD_INDEX);
   const activeCard = carouselCards[activeCardIndex];
 
   return (
@@ -77,15 +83,14 @@ export default function WalletScreen() {
           </View>
         </FadeInUp>
 
-        {/* Card carousel — tap or swipe a card to load its details below */}
+        {/* Card carousel — swipe to browse (updates the panel below), tap a card to open its dedicated page */}
         <FadeInUp delay={160} duration={550} distance={14} fromScale={0.96}>
           <CardCarousel
             cards={carouselCards}
             activeIndex={activeCardIndex}
-            onChangeIndex={(i) => {
-              setActiveCardIndex(i);
-              showDemo(`${carouselCards[i].label} — demo mode`);
-            }}
+            initialIndex={DEFAULT_CARD_INDEX}
+            onChangeIndex={setActiveCardIndex}
+            onPressCard={(card) => navigation.navigate("CardPay", { cardId: card.id })}
           />
         </FadeInUp>
 
