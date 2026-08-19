@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ScrollView,
   View,
   Text,
   StyleSheet,
-  Image,
   SafeAreaView,
   ToastAndroid,
   Platform,
@@ -15,8 +14,14 @@ import { BlurView } from "expo-blur";
 import { LogOut, CreditCard, TrendingUp, Landmark } from "lucide-react-native";
 import FadeInUp from "../components/FadeInUp";
 import PressScale from "../components/PressScale";
-import { colors, radius, shadow } from "../data/theme";
-import { user, accounts, otherAccounts, cards, getTotalBalance } from "../data/accounts";
+import ThemeToggle from "../components/ThemeToggle";
+import CardCarousel from "../components/CardCarousel";
+import CardDetailPanel from "../components/CardDetailPanel";
+import SubscriptionsSection from "../components/SubscriptionsSection";
+import TransactionsSection from "../components/TransactionsSection";
+import { useTheme } from "../context/ThemeContext";
+import { radius } from "../data/theme";
+import { user, accounts, otherAccounts, cards, carouselCards, getTotalBalance } from "../data/accounts";
 import { useSession } from "../context/SessionContext";
 
 const initials = user.name
@@ -38,8 +43,11 @@ function showDemo(msg = "Demo mode — not a real action") {
 
 export default function WalletScreen() {
   const { signOut } = useSession();
+  const { colors, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, shadow), [colors, shadow]);
   const total = getTotalBalance();
-  const [activeCard, setActiveCard] = useState(0);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const activeCard = carouselCards[activeCardIndex];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -53,9 +61,12 @@ export default function WalletScreen() {
               </View>
               <Text style={styles.userName}>{user.name}</Text>
             </View>
-            <PressScale onPress={signOut} style={styles.signOutBtn} scaleTo={0.88} hitSlop={10}>
-              <LogOut size={18} color={colors.navy} />
-            </PressScale>
+            <View style={styles.topBarRight}>
+              <ThemeToggle />
+              <PressScale onPress={signOut} style={styles.signOutBtn} scaleTo={0.88} hitSlop={10}>
+                <LogOut size={18} color={colors.textPrimary} />
+              </PressScale>
+            </View>
           </View>
         </FadeInUp>
 
@@ -66,61 +77,57 @@ export default function WalletScreen() {
           </View>
         </FadeInUp>
 
-        {/* Card stack */}
-        <FadeInUp delay={160} duration={550} distance={14} fromScale={0.94}>
-          <View style={styles.stackWrap}>
-            <PressScale
-              onPress={() => {
-                setActiveCard((c) => (c + 1) % 3);
-                showDemo("Card details — demo mode");
-              }}
-              scaleTo={0.97}
-              style={styles.frontCardWrap}
-            >
-              <Image
-                source={require("../assets/sallar_top_card.png")}
-                style={styles.frontCardImg}
-                resizeMode="contain"
-              />
-            </PressScale>
-          </View>
+        {/* Card carousel — tap or swipe a card to load its details below */}
+        <FadeInUp delay={160} duration={550} distance={14} fromScale={0.96}>
+          <CardCarousel
+            cards={carouselCards}
+            activeIndex={activeCardIndex}
+            onChangeIndex={(i) => {
+              setActiveCardIndex(i);
+              showDemo(`${carouselCards[i].label} — demo mode`);
+            }}
+          />
         </FadeInUp>
+
+        <CardDetailPanel card={activeCard} />
 
         {/* Accounts */}
         <FadeInUp delay={260}>
-          <SectionHeader title="Your Accounts" />
+          <SectionHeader title="Your Accounts" styles={styles} />
         </FadeInUp>
         <FadeInUp delay={320}>
-          <GlassCard>
+          <GlassCard colors={colors}>
             <AccountRow
+              styles={styles}
               title={accounts[0].name}
               sub={`Acct ${accounts[0].accountNumber}`}
               available={accounts[0].availableBalance}
               total={accounts[0].totalBalance}
-              linked={accounts[0].linkedCard}
+              linked={describeLinkedCards(accounts[0], carouselCards)}
             />
           </GlassCard>
         </FadeInUp>
         <FadeInUp delay={380}>
-          <GlassCard>
+          <GlassCard colors={colors}>
             <AccountRow
+              styles={styles}
               title={accounts[1].name}
               sub={`Acct ${accounts[1].accountNumber}`}
               total={accounts[1].totalBalance}
-              linked={accounts[1].linkedCard || "N/A"}
+              linked={describeLinkedCards(accounts[1], carouselCards)}
             />
           </GlassCard>
         </FadeInUp>
 
         {/* Other banking accounts */}
         <FadeInUp delay={440}>
-          <SectionHeader title="Other Banking Accounts" />
+          <SectionHeader title="Other Banking Accounts" styles={styles} />
         </FadeInUp>
         <FadeInUp delay={480}>
           <View style={styles.linkedCard}>
             <View style={styles.linkedRow}>
               <View style={styles.linkedIconWrap}>
-                <TrendingUp size={18} color={colors.gray} />
+                <TrendingUp size={18} color={colors.textSecondary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.linkedTitle}>{otherAccounts[0].name}</Text>
@@ -131,12 +138,24 @@ export default function WalletScreen() {
           </View>
         </FadeInUp>
 
+        {/* Subscriptions */}
+        <SubscriptionsSection
+          baseDelay={540}
+          onPressItem={(s) => showDemo(`${s.name} — demo mode`)}
+        />
+
+        {/* Recent transactions */}
+        <TransactionsSection
+          baseDelay={780}
+          onPressItem={(t) => showDemo(`${t.merchant} — demo mode`)}
+        />
+
         {/* Cards */}
-        <FadeInUp delay={540}>
-          <SectionHeader title="Cards" />
+        <FadeInUp delay={960}>
+          <SectionHeader title="Cards" styles={styles} />
         </FadeInUp>
         {cards.map((c, i) => (
-          <FadeInUp key={c.id} delay={580 + i * 60}>
+          <FadeInUp key={c.id} delay={1000 + i * 60}>
             <PressScale
               onPress={() => showDemo(`${c.network} — demo mode`)}
               scaleTo={0.97}
@@ -148,7 +167,7 @@ export default function WalletScreen() {
                   { backgroundColor: c.type === "credit" ? colors.navy : colors.blue },
                 ]}
               >
-                <CreditCard size={16} color={colors.white} />
+                <CreditCard size={16} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardChipLabel}>{c.label}</Text>
@@ -160,9 +179,9 @@ export default function WalletScreen() {
         ))}
 
         {/* Footer */}
-        <FadeInUp delay={720}>
+        <FadeInUp delay={1140}>
           <View style={styles.footerBanner}>
-            <Landmark size={16} color={colors.white} />
+            <Landmark size={16} color="#FFFFFF" />
             <Text style={styles.footerBannerText}>Owned and Operated By Tamato.Design</Text>
           </View>
           <Text style={styles.legal}>© Sallar Financial Inc. All rights reserved.</Text>
@@ -172,17 +191,33 @@ export default function WalletScreen() {
   );
 }
 
-function SectionHeader({ title }) {
+function describeLinkedCards(account, carousel) {
+  const list = (account.linkedCards || [])
+    .map((id) => carousel.find((c) => c.id === id))
+    .filter(Boolean);
+  if (list.length === 0) return "N/A";
+  return list.map((c) => `${c.label} ••${c.last4}`).join(", ");
+}
+
+function SectionHeader({ title, styles }) {
   return <Text style={styles.sectionHeader}>{title}</Text>;
 }
 
-function GlassCard({ children }) {
+function GlassCard({ children, colors }) {
   return (
-    <View style={styles.glassOuter}>
-      <BlurView intensity={40} tint="light" style={styles.glassBlur}>
+    <View
+      style={{
+        borderRadius: radius.md,
+        overflow: "hidden",
+        marginBottom: 14,
+        borderWidth: 1,
+        borderColor: colors.glassBorder,
+      }}
+    >
+      <BlurView intensity={40} tint={colors.mode === "dark" ? "dark" : "light"} style={{ borderRadius: radius.md }}>
         <LinearGradient
-          colors={["rgba(255,255,255,0.55)", "rgba(255,255,255,0.25)"]}
-          style={styles.glassInner}
+          colors={[colors.glassOverlayA, colors.glassOverlayB]}
+          style={{ padding: 18 }}
         >
           {children}
         </LinearGradient>
@@ -191,7 +226,7 @@ function GlassCard({ children }) {
   );
 }
 
-function AccountRow({ title, sub, available, total, linked }) {
+function AccountRow({ title, sub, available, total, linked, styles }) {
   return (
     <View>
       <View style={styles.accountRowTop}>
@@ -210,147 +245,136 @@ function AccountRow({ title, sub, available, total, linked }) {
         <Text style={styles.accountLineValue}>{money(total)}</Text>
       </View>
       <View style={styles.accountLineRow}>
-        <Text style={styles.accountLineLabel}>Linked Card</Text>
-        <Text style={styles.accountLineValue}>{linked}</Text>
+        <Text style={styles.accountLineLabel}>Linked Card{linked.includes(",") ? "s" : ""}</Text>
+        <Text style={[styles.accountLineValue, { flexShrink: 1, textAlign: "right" }]}>
+          {linked}
+        </Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.ice },
-  scroll: { padding: 20, paddingBottom: 48 },
-  topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  profilePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.6)",
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    borderRadius: radius.pill,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    paddingRight: 16,
-    gap: 10,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.navy,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { color: colors.white, fontWeight: "800", fontSize: 13 },
-  userName: { fontWeight: "700", color: colors.navy, fontSize: 14 },
-  signOutBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  balanceBlock: { marginTop: 22, paddingHorizontal: 4 },
-  balanceLabel: { fontSize: 12.5, fontWeight: "700", color: colors.gray, letterSpacing: 0.3 },
-  balanceValue: { fontSize: 38, fontWeight: "900", color: colors.navy, marginTop: 4 },
+const makeStyles = (colors, shadow) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    scroll: { padding: 20, paddingBottom: 48 },
+    topBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    topBarRight: { flexDirection: "row", alignItems: "center", gap: 12 },
+    profilePill: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      borderRadius: radius.pill,
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      paddingRight: 16,
+      gap: 10,
+    },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: colors.navy,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: { color: "#FFFFFF", fontWeight: "800", fontSize: 13 },
+    userName: { fontWeight: "700", color: colors.textPrimary, fontSize: 14 },
+    signOutBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    balanceBlock: { marginTop: 22, paddingHorizontal: 4 },
+    balanceLabel: { fontSize: 12.5, fontWeight: "700", color: colors.textSecondary, letterSpacing: 0.3 },
+    balanceValue: { fontSize: 38, fontWeight: "900", color: colors.textPrimary, marginTop: 4 },
 
-  stackWrap: { height: 360, marginTop: 28, marginHorizontal: -8, alignItems: "center", justifyContent: "center" },
-  frontCardWrap: {
-    width: "112%",
-  },
-  frontCardImg: { width: "100%", height: 360 },
+    sectionHeader: {
+      fontSize: 15,
+      fontWeight: "800",
+      color: colors.textPrimary,
+      marginTop: 30,
+      marginBottom: 12,
+      paddingHorizontal: 4,
+    },
+    accountRowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    accountName: { fontSize: 16, fontWeight: "800", color: colors.textPrimary },
+    accountTotal: { fontSize: 17, fontWeight: "800", color: colors.textPrimary },
+    accountSub: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, marginBottom: 12 },
+    accountLineRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 5,
+      gap: 12,
+    },
+    accountLineLabel: { fontSize: 13, color: colors.textSecondary, fontWeight: "600" },
+    accountLineValue: { fontSize: 13, color: colors.textPrimary, fontWeight: "700" },
 
-  sectionHeader: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.navy,
-    marginTop: 30,
-    marginBottom: 12,
-    paddingHorizontal: 4,
-  },
-  glassOuter: {
-    borderRadius: radius.md,
-    overflow: "hidden",
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    ...shadow.soft,
-  },
-  glassBlur: { borderRadius: radius.md },
-  glassInner: { padding: 18 },
-  accountRowTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  accountName: { fontSize: 16, fontWeight: "800", color: colors.navy },
-  accountTotal: { fontSize: 17, fontWeight: "800", color: colors.navy },
-  accountSub: { fontSize: 12.5, color: colors.gray, marginTop: 2, marginBottom: 12 },
-  accountLineRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 5,
-  },
-  accountLineLabel: { fontSize: 13, color: colors.gray, fontWeight: "600" },
-  accountLineValue: { fontSize: 13, color: colors.navy, fontWeight: "700" },
+    linkedCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.glassBorder,
+      borderStyle: "dashed",
+      borderRadius: radius.md,
+      padding: 16,
+      marginBottom: 14,
+    },
+    linkedRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    linkedIconWrap: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    linkedTitle: { fontSize: 14.5, fontWeight: "700", color: colors.textPrimary },
+    linkedSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    linkedBalance: { fontSize: 15, fontWeight: "800", color: colors.textPrimary },
 
-  linkedCard: {
-    backgroundColor: "rgba(255,255,255,0.5)",
-    borderWidth: 1.5,
-    borderColor: colors.grayLight,
-    borderStyle: "dashed",
-    borderRadius: radius.md,
-    padding: 16,
-    marginBottom: 14,
-  },
-  linkedRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  linkedIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.grayLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  linkedTitle: { fontSize: 14.5, fontWeight: "700", color: colors.navy },
-  linkedSub: { fontSize: 12, color: colors.gray, marginTop: 2 },
-  linkedBalance: { fontSize: 15, fontWeight: "800", color: colors.navy },
+    cardChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: 14,
+      marginBottom: 10,
+      gap: 12,
+      ...shadow.soft,
+    },
+    cardChipIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cardChipLabel: { fontSize: 14, fontWeight: "700", color: colors.textPrimary },
+    cardChipNetwork: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
+    cardChipLast4: { fontSize: 13, fontWeight: "700", color: colors.textSecondary },
 
-  cardChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderRadius: radius.md,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
-    ...shadow.soft,
-  },
-  cardChipIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardChipLabel: { fontSize: 14, fontWeight: "700", color: colors.navy },
-  cardChipNetwork: { fontSize: 11.5, color: colors.gray, marginTop: 2 },
-  cardChipLast4: { fontSize: 13, fontWeight: "700", color: colors.gray },
-
-  footerBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: colors.navy,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    marginTop: 34,
-  },
-  footerBannerText: { color: colors.white, fontWeight: "700", fontSize: 12.5 },
-  legal: {
-    textAlign: "center",
-    color: colors.gray,
-    fontSize: 11,
-    marginTop: 12,
-  },
-});
+    footerBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: colors.navy,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      marginTop: 34,
+    },
+    footerBannerText: { color: "#FFFFFF", fontWeight: "700", fontSize: 12.5 },
+    legal: {
+      textAlign: "center",
+      color: colors.textSecondary,
+      fontSize: 11,
+      marginTop: 12,
+    },
+  });

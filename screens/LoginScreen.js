@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import Logo from "../components/Logo";
 import FadeInUp from "../components/FadeInUp";
 import PressScale from "../components/PressScale";
-import { colors, radius, shadow } from "../data/theme";
-import { user } from "../data/accounts";
+import { useTheme } from "../context/ThemeContext";
+import { radius } from "../data/theme";
 import { useSession } from "../context/SessionContext";
 
 const VALID_EMAIL = "Rylandritchie12@gmail.com";
@@ -22,6 +22,8 @@ const VALID_PASSWORD = "Keith2134!";
 
 export default function LoginScreen({ navigation }) {
   const { signIn } = useSession();
+  const { colors, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, shadow), [colors, shadow]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -60,7 +62,7 @@ export default function LoginScreen({ navigation }) {
         >
           <FadeInUp delay={0} duration={450}>
             <View style={styles.logoWrap}>
-              <Logo size={30} color={colors.white} accent={colors.gold} />
+              <Logo size={30} color="#FFFFFF" accent={colors.gold} />
             </View>
           </FadeInUp>
 
@@ -87,7 +89,7 @@ export default function LoginScreen({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="you@example.com"
-                placeholderTextColor={colors.gray}
+                placeholderTextColor={colors.textSecondary}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
@@ -98,7 +100,7 @@ export default function LoginScreen({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
-                placeholderTextColor={colors.gray}
+                placeholderTextColor={colors.textSecondary}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
@@ -125,51 +127,58 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  logoWrap: { marginBottom: 28 },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: 26,
-    ...shadow.card,
-  },
-  title: { fontSize: 24, fontWeight: "900", color: colors.navy, marginBottom: 4 },
-  subtitle: { fontSize: 14, color: colors.gray, marginBottom: 22 },
-  label: { fontSize: 12.5, fontWeight: "700", color: colors.navy, marginBottom: 6, marginTop: 12 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.grayLight,
-    borderRadius: radius.sm,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.navy,
-    backgroundColor: colors.grayLight,
-  },
-  error: {
-    color: colors.danger,
-    fontSize: 13,
-    marginTop: 14,
-    fontWeight: "600",
-  },
-  loginBtn: {
-    backgroundColor: colors.blue,
-    borderRadius: radius.md,
-    paddingVertical: 15,
-    alignItems: "center",
-    marginTop: 22,
-  },
-  loginBtnText: { color: colors.white, fontWeight: "800", fontSize: 15 },
-  forgot: {
-    textAlign: "center",
-    color: colors.gray,
-    fontSize: 13,
-    fontWeight: "600",
-    marginTop: 16,
-  },
-  backLink: { color: "rgba(255,255,255,0.7)", marginTop: 22, fontSize: 13, fontWeight: "600" },
-});
+const makeStyles = (colors, shadow) =>
+  StyleSheet.create({
+    bg: { flex: 1 },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+    logoWrap: { marginBottom: 28 },
+    card: {
+      width: "100%",
+      maxWidth: 400,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 26,
+      ...shadow.card,
+    },
+    title: { fontSize: 24, fontWeight: "900", color: colors.textPrimary, marginBottom: 4 },
+    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 22 },
+    label: {
+      fontSize: 12.5,
+      fontWeight: "700",
+      color: colors.textPrimary,
+      marginBottom: 6,
+      marginTop: 12,
+    },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.glassBorder,
+      borderRadius: radius.sm,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: colors.textPrimary,
+      backgroundColor: colors.surfaceAlt,
+    },
+    error: {
+      color: colors.danger,
+      fontSize: 13,
+      marginTop: 14,
+      fontWeight: "600",
+    },
+    loginBtn: {
+      backgroundColor: colors.blue,
+      borderRadius: radius.md,
+      paddingVertical: 15,
+      alignItems: "center",
+      marginTop: 22,
+    },
+    loginBtnText: { color: "#FFFFFF", fontWeight: "800", fontSize: 15 },
+    forgot: {
+      textAlign: "center",
+      color: colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+      marginTop: 16,
+    },
+    backLink: { color: "rgba(255,255,255,0.7)", marginTop: 22, fontSize: 13, fontWeight: "600" },
+  });

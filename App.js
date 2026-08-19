@@ -1,52 +1,69 @@
 import React from "react";
 import { View, ActivityIndicator } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "./context/SessionContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import LandingScreen from "./screens/LandingScreen";
 import LoginScreen from "./screens/LoginScreen";
 import WalletScreen from "./screens/WalletScreen";
-import { colors } from "./data/theme";
 
 const Stack = createNativeStackNavigator();
 
 function RootNavigator() {
-  const { loggedIn, ready } = useSession();
+  const { loggedIn, ready: sessionReady } = useSession();
+  const { colors, mode, ready: themeReady } = useTheme();
 
-  if (!ready) {
+  if (!sessionReady || !themeReady) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.white }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
         <ActivityIndicator size="large" color={colors.blue} />
       </View>
     );
   }
 
+  const navTheme = {
+    ...(mode === "dark" ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(mode === "dark" ? DarkTheme.colors : DefaultTheme.colors),
+      background: colors.bg,
+      card: colors.surface,
+      text: colors.textPrimary,
+      border: colors.glassBorder,
+      primary: colors.blue,
+    },
+  };
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {loggedIn ? (
-        <Stack.Screen name="Wallet" component={WalletScreen} />
-      ) : (
-        <>
-          <Stack.Screen name="Landing" component={LandingScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-        </>
-      )}
-    </Stack.Navigator>
+    <>
+      <StatusBar style={mode === "dark" ? "light" : "dark"} />
+      <NavigationContainer theme={navTheme}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {loggedIn ? (
+            <Stack.Screen name="Wallet" component={WalletScreen} />
+          ) : (
+            <>
+              <Stack.Screen name="Landing" component={LandingScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </>
   );
 }
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <SessionProvider>
-        <StatusBar style="dark" />
-        <NavigationContainer>
+      <ThemeProvider>
+        <SessionProvider>
           <RootNavigator />
-        </NavigationContainer>
-      </SessionProvider>
+        </SessionProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

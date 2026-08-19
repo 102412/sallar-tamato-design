@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ScrollView,
   View,
@@ -11,7 +11,9 @@ import { ShieldCheck, Zap, SlidersHorizontal, HeartHandshake } from "lucide-reac
 import Logo from "../components/Logo";
 import FadeInUp from "../components/FadeInUp";
 import PressScale from "../components/PressScale";
-import { colors, radius, shadow } from "../data/theme";
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../context/ThemeContext";
+import { radius } from "../data/theme";
 
 const FEATURES = [
   {
@@ -32,16 +34,22 @@ const FEATURES = [
 ];
 
 export default function LandingScreen({ navigation }) {
+  const { colors, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, shadow), [colors, shadow]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Top nav */}
         <FadeInUp delay={0} duration={400}>
           <View style={styles.nav}>
-            <Logo size={22} />
-            <PressScale onPress={() => navigation.navigate("Login")} style={styles.ghostBtn}>
-              <Text style={styles.ghostBtnText}>Log In</Text>
-            </PressScale>
+            <Logo size={22} color={colors.textPrimary} />
+            <View style={styles.navRight}>
+              <ThemeToggle />
+              <PressScale onPress={() => navigation.navigate("Login")} style={styles.ghostBtn}>
+                <Text style={styles.ghostBtnText}>Log In</Text>
+              </PressScale>
+            </View>
           </View>
         </FadeInUp>
 
@@ -118,7 +126,7 @@ export default function LandingScreen({ navigation }) {
         {/* Footer */}
         <FadeInUp delay={780}>
           <View style={styles.footer}>
-            <Logo size={16} />
+            <Logo size={16} color={colors.textPrimary} />
             <View style={styles.footerLinks}>
               <Text style={styles.footerLink}>Privacy</Text>
               <Text style={styles.footerLink}>Terms</Text>
@@ -135,107 +143,109 @@ export default function LandingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.white },
-  scroll: { paddingBottom: 40 },
-  nav: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 8,
-  },
-  ghostBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.navy,
-  },
-  ghostBtnText: { color: colors.navy, fontWeight: "700", fontSize: 14 },
-  hero: { paddingHorizontal: 24, paddingTop: 36, paddingBottom: 28 },
-  heroTitle: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: colors.navy,
-    lineHeight: 40,
-    marginBottom: 12,
-  },
-  heroSubhead: {
-    fontSize: 16,
-    color: colors.gray,
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  ctaBtn: {
-    backgroundColor: colors.blue,
-    paddingVertical: 16,
-    borderRadius: radius.md,
-    alignItems: "center",
-    ...shadow.soft,
-  },
-  ctaBtnText: { color: colors.white, fontWeight: "800", fontSize: 16 },
-  trustStrip: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    backgroundColor: colors.ice,
-    marginHorizontal: 24,
-    borderRadius: radius.md,
-  },
-  trustItem: { alignItems: "center", flex: 1, gap: 6 },
-  trustLabel: {
-    fontSize: 11,
-    color: colors.navy,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  features: { paddingHorizontal: 24, paddingTop: 32, gap: 16 },
-  featureCard: {
-    backgroundColor: colors.white,
-    borderRadius: radius.md,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.grayLight,
-    ...shadow.soft,
-  },
-  featureIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.ice,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  featureTitle: { fontSize: 16, fontWeight: "800", color: colors.navy, marginBottom: 4 },
-  featureDesc: { fontSize: 13.5, color: colors.gray, lineHeight: 19 },
-  bannerCard: {
-    marginHorizontal: 24,
-    marginTop: 32,
-    borderRadius: radius.lg,
-    padding: 28,
-    alignItems: "flex-start",
-  },
-  bannerTitle: { fontSize: 22, fontWeight: "900", color: colors.white, marginBottom: 4 },
-  bannerSubhead: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 18 },
-  bannerBtn: {
-    backgroundColor: colors.white,
-    paddingVertical: 12,
-    paddingHorizontal: 22,
-    borderRadius: radius.pill,
-  },
-  bannerBtnText: { color: colors.navy, fontWeight: "800", fontSize: 14 },
-  footer: { paddingHorizontal: 24, paddingTop: 40, alignItems: "center", gap: 14 },
-  footerLinks: { flexDirection: "row", gap: 20 },
-  footerLink: { color: colors.gray, fontSize: 13, fontWeight: "600" },
-  disclosure: {
-    fontSize: 11,
-    color: colors.gray,
-    textAlign: "center",
-    lineHeight: 16,
-    marginTop: 6,
-  },
-});
+const makeStyles = (colors, shadow) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    scroll: { paddingBottom: 40 },
+    nav: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 24,
+      paddingTop: 18,
+      paddingBottom: 8,
+    },
+    navRight: { flexDirection: "row", alignItems: "center", gap: 14 },
+    ghostBtn: {
+      paddingVertical: 8,
+      paddingHorizontal: 18,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderColor: colors.textPrimary,
+    },
+    ghostBtnText: { color: colors.textPrimary, fontWeight: "700", fontSize: 14 },
+    hero: { paddingHorizontal: 24, paddingTop: 36, paddingBottom: 28 },
+    heroTitle: {
+      fontSize: 34,
+      fontWeight: "900",
+      color: colors.textPrimary,
+      lineHeight: 40,
+      marginBottom: 12,
+    },
+    heroSubhead: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      lineHeight: 22,
+      marginBottom: 24,
+    },
+    ctaBtn: {
+      backgroundColor: colors.blue,
+      paddingVertical: 16,
+      borderRadius: radius.md,
+      alignItems: "center",
+      ...shadow.soft,
+    },
+    ctaBtnText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
+    trustStrip: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingHorizontal: 24,
+      paddingVertical: 20,
+      backgroundColor: colors.surfaceAlt,
+      marginHorizontal: 24,
+      borderRadius: radius.md,
+    },
+    trustItem: { alignItems: "center", flex: 1, gap: 6 },
+    trustLabel: {
+      fontSize: 11,
+      color: colors.textPrimary,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    features: { paddingHorizontal: 24, paddingTop: 32, gap: 16 },
+    featureCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: 20,
+      borderWidth: 1,
+      borderColor: colors.glassBorder,
+      ...shadow.soft,
+    },
+    featureIconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 12,
+    },
+    featureTitle: { fontSize: 16, fontWeight: "800", color: colors.textPrimary, marginBottom: 4 },
+    featureDesc: { fontSize: 13.5, color: colors.textSecondary, lineHeight: 19 },
+    bannerCard: {
+      marginHorizontal: 24,
+      marginTop: 32,
+      borderRadius: radius.lg,
+      padding: 28,
+      alignItems: "flex-start",
+    },
+    bannerTitle: { fontSize: 22, fontWeight: "900", color: "#FFFFFF", marginBottom: 4 },
+    bannerSubhead: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 18 },
+    bannerBtn: {
+      backgroundColor: "#FFFFFF",
+      paddingVertical: 12,
+      paddingHorizontal: 22,
+      borderRadius: radius.pill,
+    },
+    bannerBtnText: { color: colors.navy, fontWeight: "800", fontSize: 14 },
+    footer: { paddingHorizontal: 24, paddingTop: 40, alignItems: "center", gap: 14 },
+    footerLinks: { flexDirection: "row", gap: 20 },
+    footerLink: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
+    disclosure: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      textAlign: "center",
+      lineHeight: 16,
+      marginTop: 6,
+    },
+  });
