@@ -20,7 +20,6 @@ function useSafeWindowWidth() {
       window.addEventListener("resize", onResize);
     }
     const sub = Dimensions.addEventListener?.("change", onResize);
-    // Re-check shortly after mount in case the window wasn't ready yet.
     const t = setTimeout(onResize, 50);
     return () => {
       if (typeof window !== "undefined" && window.removeEventListener) {
@@ -42,22 +41,39 @@ const SPACING = 18;
 // dedicated page (via onPressCard); the scroll gesture alone drives which
 // card is "active" for the preview panel underneath.
 //
-// Sizing is derived from useWindowDimensions (not Dimensions.get at module
-// scope) — on web the module can evaluate before the window has a real
-// width, which would otherwise make these values 0/negative and crash
-// Animated.interpolate with a non-monotonic inputRange.
-export default function CardCarousel({ cards, activeIndex, initialIndex = 0, onChangeIndex, onPressCard }) {
+// Sizing is derived from the window width minus `horizontalInset` (the
+// parent page's own horizontal padding, passed in explicitly) rather than
+// measured via onLayout — in this RN Web build, onLayout doesn't reliably
+// fire on either the ScrollView or a plain wrapping View, so there's no
+// dependable way to measure the carousel's real content-box width at
+// runtime. The caller already knows its own padding; use that instead of
+// guessing at the full (unpadded) window width, which would center
+// everything against the wrong box and visibly throw the focused card off
+// the true screen center.
+export default function CardCarousel({
+  cards,
+  activeIndex,
+  initialIndex = 0,
+  onChangeIndex,
+  onPressCard,
+  horizontalInset = 0,
+}) {
   const { colors } = useTheme();
-  const screenWidth = useSafeWindowWidth();
+  const windowWidth = useSafeWindowWidth();
+  const containerWidth = Math.max(240, windowWidth - horizontalInset * 2);
 
   const { cardWidth, itemSize, sideInset } = useMemo(() => {
-    const width = Math.max(240, Math.min(screenWidth - 40, 420));
+    const width = Math.max(240, Math.min(containerWidth - 20, 420));
+    const item = width + SPACING;
     return {
       cardWidth: width,
-      itemSize: width + SPACING,
-      sideInset: (screenWidth - width) / 2,
+      itemSize: item,
+      // Center on the full slot (card + its trailing spacing), not just the
+      // card's own width — each snap position aligns a slot's left edge at
+      // sideInset, so centering the slot is what centers the card itself.
+      sideInset: (containerWidth - item) / 2,
     };
-  }, [screenWidth]);
+  }, [containerWidth]);
 
   const scrollX = useRef(new Animated.Value(initialIndex * itemSize)).current;
   const listRef = useRef(null);
@@ -70,11 +86,11 @@ export default function CardCarousel({ cards, activeIndex, initialIndex = 0, onC
   };
 
   // Center on the requested starting card after mount. Neither `onLayout`
-  // nor `requestAnimationFrame` fire reliably for this in every RN Web
-  // environment (onLayout can simply never call back on Animated.ScrollView;
-  // rAF is throttled/paused in backgrounded or non-compositing tabs), so
-  // this uses plain timers, re-asserting a couple of times since the very
-  // first imperative scrollTo can silently no-op before layout has settled.
+  // (on the ScrollView or a plain wrapping View) nor `requestAnimationFrame`
+  // fire reliably for this in every RN Web environment (rAF in particular is
+  // throttled/paused in backgrounded or non-compositing tabs), so this uses
+  // plain timers instead, re-asserting a couple of times since the first
+  // imperative scrollTo can silently no-op before layout has fully settled.
   useEffect(() => {
     const target = initialIndex * itemSize;
     const timers = [0, 80, 250].map((delay) =>

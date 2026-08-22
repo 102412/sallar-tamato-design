@@ -90,6 +90,7 @@ export default function WalletScreen({ navigation }) {
             activeIndex={activeCardIndex}
             initialIndex={DEFAULT_CARD_INDEX}
             onChangeIndex={setActiveCardIndex}
+            horizontalInset={20}
             onPressCard={(card) => navigation.navigate("CardPay", { cardId: card.id })}
           />
         </FadeInUp>
