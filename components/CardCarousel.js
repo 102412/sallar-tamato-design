@@ -100,6 +100,8 @@ export default function CardCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Math.round is the 50% threshold: crossing halfway to the next card
+  // rounds up to it, otherwise it rounds back to the current one.
   const nearestIndexFor = (x) => Math.max(0, Math.min(cards.length - 1, Math.round(x / itemSize)));
 
   const handleMomentumEnd = (e) => {
@@ -108,11 +110,25 @@ export default function CardCarousel({
   };
 
   const handleScrollEndDrag = (e) => {
-    // Fallback for platforms/gestures (e.g. trackpad flicks on web) that
-    // don't reliably fire onMomentumScrollEnd — re-snap to the nearest card.
+    // Fallback for gestures that don't fire onMomentumScrollEnd.
     const x = e.nativeEvent.contentOffset.x;
     snapToIndex(nearestIndexFor(x));
   };
+
+  // Mouse-wheel / trackpad scrolling on web fires neither of the handlers
+  // above (those are touch-drag/momentum specific) — the ScrollView just
+  // stops wherever the wheel left it, unsnapped. A wheel scroll also has no
+  // native "end" event, so this debounces on scroll stillness: every scroll
+  // tick (any input method) resets a short timer, and once ticks stop for
+  // a beat, it snaps to whichever card is past the 50% threshold.
+  const wheelSettleTimer = useRef(null);
+  const handleScrollTick = (e) => {
+    const x = e.nativeEvent.contentOffset.x;
+    if (wheelSettleTimer.current) clearTimeout(wheelSettleTimer.current);
+    wheelSettleTimer.current = setTimeout(() => snapToIndex(nearestIndexFor(x)), 120);
+  };
+
+  useEffect(() => () => wheelSettleTimer.current && clearTimeout(wheelSettleTimer.current), []);
 
   return (
     <View style={styles.wrap}>
@@ -127,6 +143,7 @@ export default function CardCarousel({
         contentContainerStyle={{ paddingHorizontal: sideInset }}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
           useNativeDriver: true,
+          listener: handleScrollTick,
         })}
         scrollEventThrottle={16}
         onMomentumScrollEnd={handleMomentumEnd}

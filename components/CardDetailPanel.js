@@ -16,10 +16,16 @@ export default function CardDetailPanel({ card }) {
   const [display, setDisplay] = useState(card);
 
   useEffect(() => {
-    Animated.timing(anim, { toValue: 0, duration: 120, useNativeDriver: true }).start(() => {
+    // The content swap runs on its own timer rather than inside the fade
+    // animation's completion callback — an animation that gets interrupted
+    // or never resolves its driver shouldn't be able to strand the panel
+    // showing stale card info.
+    Animated.timing(anim, { toValue: 0, duration: 120, useNativeDriver: true }).start();
+    const t = setTimeout(() => {
       setDisplay(card);
       Animated.timing(anim, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-    });
+    }, 120);
+    return () => clearTimeout(t);
   }, [card, anim]);
 
   const account = display.accountId ? getAccountById(display.accountId) : null;
