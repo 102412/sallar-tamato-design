@@ -1,57 +1,98 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { Animated, Image, Pressable, StyleSheet, View } from "react-native";
 
 const CARD_HEIGHT = 210;
-const PEEK = 16; // vertical reveal per card stacked behind the front one
+const PEEK_COLLAPSED = 16; // resting peek per stacked card
+const PEEK_EXPANDED = 72; // peek once fully scrolled/pulled open
+const EXTRA_PAD = 10;
 
-// Apple-Wallet-style stacked deck: the active card sits full-size up front;
-// the rest fan out behind it in their original order, each peeking out a
-// little further below. Tapping the front card opens its dedicated page
-// (onPressCard); tapping a card peeking out from behind brings it to the
-// front (onChangeIndex) — no scrolling involved, so none of the width/
-// snap-timing issues a horizontal carousel runs into on web apply here.
+// Apple-Wallet-style stacked deck. At rest the active card sits full-size
+// up front with the others peeking a little behind it; scrolling down over
+// the stack (wheel, trackpad, or a touch drag) pulls it open, spreading the
+// back cards apart so more of each is visible — the actual scroll logic
+// that reveals the next cards, not just a static sliver. Tapping a card
+// once it's visible brings it to the front; tapping the front card opens
+// its dedicated page.
 export default function CardStack({ cards, activeIndex, onChangeIndex, onPressCard }) {
-  const stackHeight = CARD_HEIGHT + (cards.length - 1) * PEEK + 6;
+  const backCount = Math.max(0, cards.length - 1);
+  const extraRange = backCount * (PEEK_EXPANDED - PEEK_COLLAPSED);
+  const visibleHeight = CARD_HEIGHT + backCount * PEEK_COLLAPSED + EXTRA_PAD;
+
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   return (
-    <View style={[styles.wrap, { height: stackHeight }]}>
-      {cards.map((card, i) => {
-        const isActive = i === activeIndex;
-        const backRank = i < activeIndex ? i : i - 1; // 0-based rank among the back cards, in original order
-        return (
-          <StackCard
-            key={card.id}
-            card={card}
-            isActive={isActive}
-            backRank={isActive ? 0 : backRank}
-            onPress={() => (isActive ? onPressCard?.(card) : onChangeIndex(i))}
-          />
-        );
-      })}
+    <View style={[styles.wrap, { height: visibleHeight }]}>
+      <Animated.ScrollView
+        style={{ height: visibleHeight }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
+        scrollEventThrottle={16}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+      >
+        <View style={{ height: visibleHeight + extraRange, position: "relative" }}>
+          {cards.map((card, i) => {
+            const isActive = i === activeIndex;
+            const backRank = isActive ? 0 : i < activeIndex ? i : i - 1;
+            return (
+              <StackCard
+                key={card.id}
+                card={card}
+                isActive={isActive}
+                backRank={backRank}
+                scrollY={scrollY}
+                extraRange={extraRange || 1}
+                onPress={() => (isActive ? onPressCard?.(card) : onChangeIndex(i))}
+              />
+            );
+          })}
+        </View>
+      </Animated.ScrollView>
     </View>
   );
 }
 
-function StackCard({ card, isActive, backRank, onPress }) {
-  const anim = useRef(new Animated.Value(isActive ? 0 : 1)).current;
+function StackCard({ card, isActive, backRank, scrollY, extraRange, onPress }) {
   const [pressed, setPressed] = React.useState(false);
 
-  useEffect(() => {
-    Animated.spring(anim, {
-      toValue: isActive ? 0 : 1,
-      useNativeDriver: true,
-      speed: 16,
-      bounciness: 7,
-    }).start();
-  }, [isActive, anim]);
+  // Cards are real children of the scrolling content, so they'd otherwise
+  // scroll away with it. Adding scrollY back cancels that natural
+  // follow-through for the active card (pins it in place) and, for back
+  // cards, layers a growing spread on top of it (revealing more of each as
+  // the stack is scrolled open) — both from one continuous `scrollY` value,
+  // no custom snap/settle logic needed since the ScrollView's own content
+  // bounds already clamp it between fully closed and fully open.
+  const desiredOffset = isActive
+    ? new Animated.Value(0)
+    : scrollY.interpolate({
+        inputRange: [0, extraRange],
+        outputRange: [(backRank + 1) * PEEK_COLLAPSED, (backRank + 1) * PEEK_EXPANDED],
+        extrapolate: "clamp",
+      });
+  const translateY = Animated.add(scrollY, desiredOffset);
 
-  const backTranslateY = (backRank + 1) * PEEK;
-  const backScale = 1 - Math.min(backRank + 1, 3) * 0.035;
-  const backOpacity = 1 - Math.min(backRank + 1, 3) * 0.16;
-
-  const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [0, backTranslateY] });
-  const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, backScale] });
-  const opacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, backOpacity] });
+  const scale = isActive
+    ? 1
+    : scrollY.interpolate({
+        inputRange: [0, extraRange],
+        outputRange: [
+          1 - Math.min(backRank + 1, 3) * 0.035,
+          1 - Math.min(backRank + 1, 3) * 0.012,
+        ],
+        extrapolate: "clamp",
+      });
+  const opacity = isActive
+    ? 1
+    : scrollY.interpolate({
+        inputRange: [0, extraRange],
+        outputRange: [
+          1 - Math.min(backRank + 1, 3) * 0.16,
+          1 - Math.min(backRank + 1, 3) * 0.05,
+        ],
+        extrapolate: "clamp",
+      });
 
   return (
     <Pressable
@@ -79,7 +120,7 @@ function StackCard({ card, isActive, backRank, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: 24, position: "relative" },
+  wrap: { marginTop: 24, position: "relative", overflow: "visible" },
   cardSlot: {
     position: "absolute",
     top: 0,
