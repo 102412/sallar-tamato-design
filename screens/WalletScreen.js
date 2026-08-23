@@ -15,7 +15,7 @@ import { LogOut, CreditCard, TrendingUp, Landmark } from "lucide-react-native";
 import FadeInUp from "../components/FadeInUp";
 import PressScale from "../components/PressScale";
 import ThemeToggle from "../components/ThemeToggle";
-import CardCarousel from "../components/CardCarousel";
+import CardStack from "../components/CardStack";
 import CardDetailPanel from "../components/CardDetailPanel";
 import SubscriptionsSection from "../components/SubscriptionsSection";
 import TransactionsSection from "../components/TransactionsSection";
@@ -83,14 +83,12 @@ export default function WalletScreen({ navigation }) {
           </View>
         </FadeInUp>
 
-        {/* Card carousel — swipe to browse (updates the panel below), tap a card to open its dedicated page */}
+        {/* Card stack — tap a peeking card to bring it forward, tap the front card to open its dedicated page */}
         <FadeInUp delay={160} duration={550} distance={14} fromScale={0.96}>
-          <CardCarousel
+          <CardStack
             cards={carouselCards}
             activeIndex={activeCardIndex}
-            initialIndex={DEFAULT_CARD_INDEX}
             onChangeIndex={setActiveCardIndex}
-            horizontalInset={20}
             onPressCard={(card) => navigation.navigate("CardPay", { cardId: card.id })}
           />
         </FadeInUp>
